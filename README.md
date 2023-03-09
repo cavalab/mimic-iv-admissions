@@ -112,3 +112,14 @@ Below we break down the admission rates by demographic groups.
 | Unknown/Unable to Obtain      | 1521/2156 (71%)   | 2074/2377 (87%)   | 3595/4533 (79%)    |
 | White                         | 18147/50174 (36%) | 18951/45435 (42%) | 37098/95609 (39%)  |
 | Overall                       | 26200/99093 (26%) | 27389/74468 (37%) | 53589/173561 (31%) |
+
+
+## Features used to predict admissions
+
+| Description     |   Features   |
+|-----------------|--------------|
+| Vitals  | temperature, heartrate, 	resprate, 	o2sat, 	systolic blood pressure, 	diastolic blood pressure |
+| Triage Acuity |  Emergency Severity Index |
+| Check-in Data   | chief complaint, self-reported pain score |
+| Health Record Data  | no. previous visits, no. previous admissions |
+| Demographic Data    | ethnoracial group, gender, age, marital status, insurance, primary language |
