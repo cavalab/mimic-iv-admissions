@@ -100,6 +100,8 @@ def age_at_visit(df):
     anchor_age: age at anchor year.
     anchor_year: randomized year to anchor patient data.
     intime: intime for the patient in the ed.
+
+    age at visit is the anchor_age plus the intime year minus the anchor_year.
     """
     anchor_age = df["anchor_age"].values
     anchor_year = df["anchor_year"].copy()
