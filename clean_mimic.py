@@ -1,7 +1,8 @@
 import os
 import pandas as pd
-import argparse
 import warnings
+import fire
+import numpy as np
 
 warnings.filterwarnings("ignore")
 
@@ -31,13 +32,10 @@ COLUMNS_TO_KEEP = [
     "dbp",
     "pain",
     "acuity",
-    "insurance",
-    "language",
-    "marital_status",
     "ethnicity",
     "chiefcomplaint",
     "gender",
-    "anchor_age",
+    "age_at_visit",
 ]
 
 
@@ -97,23 +95,40 @@ def remove_outliers(
     return x
 
 
-def process_data(adm, ed, tri, pat, results_path="final.csv"):
+def age_at_visit(df):
+    """Get the age of the patient at their visit.
+    anchor_age: age at anchor year.
+    anchor_year: randomized year to anchor patient data.
+    intime: intime for the patient in the ed.
+    """
+    anchor_age = df["anchor_age"].values
+    anchor_year = df["anchor_year"].copy()
+    intime = pd.to_datetime(df["intime"].copy())
+    year_delta = np.asarray([it.year - ay for it, ay in zip(intime, anchor_year)])
+    age_at_visit = anchor_age + year_delta
+
+    return age_at_visit
+
+
+def process_data(
+    mimic_path="./data",
+    admissions_file="core/admissions.csv.gz",
+    ed_file="ed/edstays.csv.gz",
+    triage_file="ed/triage.csv.gz",
+    patients_file="core/patients.csv.gz",
+    results_path="final.csv",
+):
     print("loading and processing mimic files...")
-    adm = pd.read_csv(adm)
-    ed = pd.read_csv(ed)
-    tri = pd.read_csv(tri)
-    pat = pd.read_csv(pat)
-
-    import ipdb
-
-    ipdb.set_trace()
+    adm = pd.read_csv(os.path.join(mimic_path, admissions_file))
+    ed = pd.read_csv(os.path.join(mimic_path, ed_file))
+    tri = pd.read_csv(os.path.join(mimic_path, triage_file))
+    pat = pd.read_csv(os.path.join(mimic_path, patients_file))
 
     print("merging...")
     df = merge_all(adm, ed, tri, pat)
 
-    import ipdb
+    df["age_at_visit"] = age_at_visit(df)
 
-    ipdb.set_trace()
     print("dropping columns...")
     df = df[COLUMNS_TO_KEEP]
 
@@ -154,65 +169,5 @@ def process_data(adm, ed, tri, pat, results_path="final.csv"):
     print("done.")
 
 
-# add more options here later
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Input the file location for the four files from MIMIC IV.",
-        add_help=False,
-    )
-    parser.add_argument(
-        "-mimic_path",
-        action="store",
-        type=str,
-        default="data",
-        help="Path for admission file",
-    )
-    parser.add_argument(
-        "-Admission_File",
-        action="store",
-        type=str,
-        default="core/admissions.csv.gz",
-        help="Path for admission file",
-    )
-    parser.add_argument(
-        "-Edstay_File",
-        action="store",
-        type=str,
-        default="ed/edstays.csv.gz",
-        help="Path for edstay file",
-    )
-    parser.add_argument(
-        "-Triage_File",
-        action="store",
-        type=str,
-        default="ed/triage.csv.gz",
-        help="Path for Triage File",
-    )
-    parser.add_argument(
-        "-Patient_File",
-        action="store",
-        type=str,
-        default="core/patients.csv.gz",
-        help="Path for Patient file",
-    )
-    parser.add_argument(
-        "-h", "--help", action="help", help="Show this help message and exit."
-    )
-    parser.add_argument(
-        "-p",
-        action="store",
-        dest="PATH",
-        default="mimic4_admissions.csv",
-        type=str,
-        help="Path of Saved final fire",
-    )
-
-    args = parser.parse_args()
-
-    process_data(
-        os.path.join(args.mimic_path, args.Admission_File),
-        os.path.join(args.mimic_path, args.Edstay_File),
-        os.path.join(args.mimic_path, args.Triage_File),
-        os.path.join(args.mimic_path, args.Patient_File),
-        results_path=args.PATH,
-    )
+    fire.Fire(process_data)
